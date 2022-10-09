@@ -1,10 +1,12 @@
 import os
 import maya.cmds as cmds
+import System.utils as utils
 
 CLASS_NAME = "ModuleA"
 TITLE = 'Module A'
 DESCRIPTION = 'Test description for module A'
 ICON = os.environ['RIGGING_TOOL_ROOT'] + '/Icons/_hand.xpm'
+
 
 class ModuleA():
     def __init__(self, user_specified_name):
@@ -53,5 +55,36 @@ class ModuleA():
 
         cmds.parent(joints[0], self.joints_grp, absolute=True)
 
+        translation_controls = []
+        for joint in joints:
+            translation_controls.append(self.create_translation_control_at_joint(joint))
+
+
         cmds.lockNode(self.container_name, lock=True, lockUnpublished=True)
+
+    def create_translation_control_at_joint(self, joint):
+        pos_control_file = os.environ["RIGGING_TOOL_ROOT"] + "/ControlObjects/Blueprint/translation_control.ma"
+        cmds.file(pos_control_file, i=True)
+        container = cmds.rename("translation_control_container", joint + "_translation_control_container")
+        cmds.container(self.container_name, edit=True, addNode=container)
+
+        for node in cmds.container(container, q=True, nodeList=True):
+            cmds.rename(node, joint + "_" + node, ignoreShape=True)
+
+        control = joint + "_translation_control"
+
+        joint_pos = cmds.xform(joint, q=True, worldSpace=True, translation=True)
+        cmds.xform(control, worldSpace=True, absolute=True, translation=joint_pos)
+        nice_name = utils.strip_leading_namespace(joint)[1]
+        attr_name = nice_name + "_T"
+
+        cmds.container(container, edit=True, publishAndBind=[control + ".translate", attr_name])
+        cmds.container(self.container_name, edit=True, publishAndBind=[container + "." + attr_name, attr_name])
+
+        return control
+
+    def get_translation_control(self, joint_name):
+        return joint_name + "_translation_control"
+
+
 
