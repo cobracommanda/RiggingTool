@@ -109,6 +109,17 @@ def basic_stretchy_IK(root_joint, end_joint, container=None, lock_mininum_length
 
     return return_dict
 
+def force_scene_update():
+    cmds.setToolTo("moveSuperContext")
+    nodes = cmds.ls()
+
+    for node in nodes:
+        cmds.select(node, replace=True)
+
+    cmds.select(clear=True)
+    cmds.setToolTo("selectSuperContext")
+
+
 
 
 
