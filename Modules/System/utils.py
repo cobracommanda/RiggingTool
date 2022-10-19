@@ -1,3 +1,5 @@
+import types
+
 import maya.cmds as cmds
 
 def find_all_modules(relative_directory):
@@ -96,7 +98,7 @@ def basic_stretchy_IK(root_joint, end_joint, container=None, lock_mininum_length
     cmds.setAttr(end_locator+".visibility", 0)
 
     if container != None:
-        cmds.container(container, edit=True, addNode=contained_nodes, ihb=True)
+        add_node_to_container(container, contained_nodes, ihb=True)
 
     return_dict = {}
     return_dict['ik_handle'] = ik_handle
@@ -118,6 +120,22 @@ def force_scene_update():
 
     cmds.select(clear=True)
     cmds.setToolTo("selectSuperContext")
+
+
+def add_node_to_container(container, nodes_in, ihb=False, includeShapes=False, force=False):
+    import types
+
+    if type(nodes_in) is types.ListType:
+        nodes = nodes_in
+    else:
+        nodes = [nodes_in]
+    conversion_nodes = []
+    for node in nodes:
+        node_conversion_nodes = cmds.listConnections(node, source=True, destination=True)
+        node_conversion_nodes = cmds.ls(node_conversion_nodes, type="unitConversion")
+        conversion_nodes.extend(node_conversion_nodes)
+    nodes.extend(conversion_nodes)
+    cmds.container(container, edit=True, addNode=nodes, ihb=ihb, includeShapes=includeShapes, force=force )
 
 
 
